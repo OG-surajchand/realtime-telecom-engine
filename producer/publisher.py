@@ -27,7 +27,7 @@ def delivery_report(err, msg):
         print(f"✅ {msg.topic()} [{msg.partition()}] @ {msg.offset()}: {msg.key().decode('utf-8')}")
 
 def simulate_stream(limit=100):
-    topics = ['orders', 'user-clicks']
+    topics = ['orders']
     
     for i in range(limit):
         order_id = f"ord_{random.randint(1000, 9999)}"

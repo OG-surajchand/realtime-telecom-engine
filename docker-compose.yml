@@ -1,10 +1,15 @@
 version: '3.8'
 
+networks:
+  iot-net:
+    driver: bridge
+
 services:
   kafka-1:
     image: apache/kafka:latest
     container_name: kafka-1
-    hostname: kafka-1
+    networks:
+      - iot-net
     ports:
       - "9092:9092"
     environment:
@@ -17,13 +22,12 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
 
   kafka-2:
     image: apache/kafka:latest
     container_name: kafka-2
-    hostname: kafka-2
+    networks:
+      - iot-net
     ports:
       - "9093:9092"
     environment:
@@ -36,12 +40,12 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
 
   kafka-3:
     image: apache/kafka:latest
     container_name: kafka-3
-    hostname: kafka-3
+    networks:
+      - iot-net
     ports:
       - "9094:9092"
     environment:
@@ -54,4 +58,33 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+
+  postgres:
+    image: postgres:14-alpine
+    container_name: postgres
+    networks:
+      - iot-net
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: iot_db
+    ports:
+      - "5432:5432"
+
+  spark:
+    build: ./spark
+    container_name: spark
+    networks:
+      - iot-net
+    depends_on:
+      - kafka-1
+      - kafka-2
+      - kafka-3
+      - postgres
+    volumes:
+      - ./spark:/app  
+    command: >
+      /opt/spark/bin/spark-submit
+      --master local[*]
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.postgresql:postgresql:42.7.2
+      /app/app.py
