@@ -20,7 +20,6 @@ schema = StructType([
     StructField("status", StringType())
 ])
 
-# 2. Parse the JSON payload
 df_parsed = df_raw.selectExpr("CAST(value AS STRING)") \
     .select(F.from_json("value", schema).alias("data")) \
     .select("data.*") \
