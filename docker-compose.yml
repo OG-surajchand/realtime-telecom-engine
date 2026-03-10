@@ -70,7 +70,16 @@ services:
       POSTGRES_DB: iot_db
     ports:
       - "5432:5432"
-
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    networks:
+      - iot-net
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - ./redis_data:/data
   spark:
     build: ./spark
     container_name: spark
@@ -88,3 +97,12 @@ services:
       --master local[*]
       --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.postgresql:postgresql:42.7.2
       /app/app.py
+  dashboard:
+    build: ./dashboard
+    container_name: dashboard
+    ports:
+      - "8501:8501"
+    networks:
+      - iot-net
+    depends_on:
+      - redis
